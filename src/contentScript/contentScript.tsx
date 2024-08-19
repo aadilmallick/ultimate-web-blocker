@@ -6,12 +6,19 @@ import {
   receivePingFromBackground,
 } from "app/background/controllers/messageController";
 import { MessagesOneWay } from "app/utils/api/messages";
+import { LocalStorageBrowser } from "app/utils/vanillajs-utils/domUtils";
 
-// MessagesOneWay.listenToMessages((message) => {
+// MessagesOneWay.listenToMessages((message, _, sendResponse) => {
 //   const { messageBelongsToChannel: messageBelongsToBlockChannel } =
 //     blockChannel.parseMessage(message);
 //   const { messageBelongsToChannel: messageBelongsToFocusChannel } =
 //     focusModeChannel.parseMessage(message);
+
+//   if (message.type === "PING") {
+//     sendResponse?.({ status: "PONG" });
+//     return;
+//   }
+
 //   if (messageBelongsToBlockChannel) {
 //     document.head.title = "Blocked Site - Block Mode";
 //     document.body.innerHTML = "";
@@ -26,14 +33,14 @@ import { MessagesOneWay } from "app/utils/api/messages";
 //   }
 // });
 
-blockChannel.listen(({ url }) => {
+blockChannel.listenAsync(async ({ url }) => {
   console.log(`Blocking site: ${url}`);
   document.head.title = "Blocked Site";
   document.body.innerHTML = "";
   injectRoot(<App />, "block-sites-root");
 });
 
-focusModeChannel.listen(({ url }) => {
+focusModeChannel.listenAsync(async ({ url }) => {
   console.log(`Blocking site: ${url}`);
   document.head.title = "Blocked Site";
   document.body.innerHTML = "";

@@ -11,6 +11,7 @@ import {
   focusModeChannel,
   MessageHandler,
   pingContentScript,
+  pingContentScriptWithCb,
 } from "./controllers/messageController";
 
 Runtime.onInstall({
@@ -33,11 +34,16 @@ Runtime.onInstall({
 
 function isValidUrl(url: string) {
   const manifest = chrome.runtime.getManifest();
-  const matches = manifest.content_scripts[0]!.matches![0];
-  if (!url.match(matches)) {
-    return false;
-  }
-  return true;
+  if (!manifest.content_scripts) throw new Error("No content scripts found");
+  const matches = manifest.content_scripts[0].matches;
+  if (!matches) throw new Error("No matches found in manifest");
+  let isValid = true;
+  matches.forEach((match) => {
+    if (!url.match(match)) {
+      isValid = false;
+    }
+  });
+  return isValid;
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -70,14 +76,13 @@ async function handleFocusMode(tabId: number, url: string) {
   console.log(focusGroup);
   console.log(`not in focus group ${new URL(url).hostname}`, notInFocusGroup);
   if (focusGroup.isFocusing && notInFocusGroup) {
-    try {
-      await pingContentScript(tabId);
-    } catch (error) {
-      console.error("Error pinging content script", error);
-      return;
-    }
-    focusModeChannel.sendP2C(tabId, { url });
-    console.log("sending focusmode message", url);
+    await pingContentScriptWithCb(tabId, {
+      successCb: (message) => {
+        console.log(message);
+        focusModeChannel.sendP2C(tabId, { url });
+        console.log("sending focusmode message", url);
+      },
+    });
   }
 }
 
@@ -89,14 +94,13 @@ async function onUpdated(tabId: number, url: string) {
   const scheduledUrls = scheduledSites.map((site) => site.url);
   if (URLHandler.containsURL(url!, permanetlyBlockedUrls)) {
     // block site
-    try {
-      await pingContentScript(tabId);
-    } catch (error) {
-      console.error("Error pinging content script", error);
-      return;
-    }
-    blockChannel.sendP2C(tabId, { url });
-    console.log("sending blocking message", url);
+    await pingContentScriptWithCb(tabId, {
+      successCb: (message) => {
+        console.log(message);
+        blockChannel.sendP2C(tabId, { url });
+        console.log("sending blocking message", url);
+      },
+    });
   }
   if (URLHandler.containsURL(url!, scheduledUrls)) {
     const currentTime = Date.now();
@@ -111,15 +115,14 @@ async function onUpdated(tabId: number, url: string) {
       currentTime >= DateModel.convertTimeToDate(startTime).getTime() &&
       currentTime <= DateModel.convertTimeToDate(endTime).getTime()
     ) {
-      try {
-        await pingContentScript(tabId);
-      } catch (error) {
-        console.error("Error pinging content script", error);
-        return;
-      }
+      await pingContentScriptWithCb(tabId, {
+        successCb: (message) => {
+          console.log(message);
+          blockChannel.sendP2C(tabId, { url });
+          console.log("sending blocking message", url);
+        },
+      });
       // block site
-      blockChannel.sendP2C(tabId, { url });
-      console.log("sending blocking message", url);
     }
   }
 }

@@ -12,7 +12,7 @@ export function pingContentScript(
   tabId: number,
   maxRetries = 10,
   interval = 500
-) {
+): Promise<string> {
   return new Promise((resolve, reject) => {
     let attempts = 0;
 
@@ -43,6 +43,25 @@ export function receivePingFromBackground() {
       sendResponse({ status: "PONG" });
     }
   });
+}
+
+export async function pingContentScriptWithCb(
+  tabId: number,
+  {
+    successCb,
+    errorCb,
+  }: {
+    successCb: (message?: string) => void;
+    errorCb?: () => void;
+  }
+) {
+  try {
+    const message = await pingContentScript(tabId);
+    successCb(message);
+  } catch (error) {
+    console.error("Error pinging content script", error);
+    errorCb?.();
+  }
 }
 
 // define static methods here

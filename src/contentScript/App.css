@@ -1,0 +1,22 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  position: relative;
+  min-height: 100vh;
+}
+
+.contentscript-container {
+  background: black;
+  position: fixed;
+  inset: 0;
+  .content-container {
+    color: white;
+    h1 {
+      font-size: 3rem;
+    }
+  }
+}

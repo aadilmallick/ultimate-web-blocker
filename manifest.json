@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Ultimate Web Blocker",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "See block groups",
+    "default_icon": {
+      "16": "public/icon.png",
+      "32": "public/icon.png",
+      "48": "public/icon.png",
+      "128": "public/icon.png"
+    }
+  },
+  "icons": {
+    "16": "public/icon.png",
+    "32": "public/icon.png",
+    "48": "public/icon.png",
+    "128": "public/icon.png"
+  },
+  "permissions": ["storage", "tabs"],
+  "options_page": "src/options/options.html",
+  "background": {
+    "service_worker": "src/background/background.ts",
+    "type": "module"
+  },
+  "host_permissions": ["https://icons.duckduckgo.com/ip2/*.ico"],
+  "content_scripts": [
+    {
+      "js": ["src/contentScript/contentScript.tsx"],
+      "matches": ["https://*/*"]
+    }
+  ],
+  "description": "The ultimate web blocker to schedule blocks, set focus lists, and so much more."
+}

@@ -1,0 +1,23 @@
+/* Styles for custom modals */
+
+#custom-modal {
+  .modal {
+    position: fixed;
+    z-index: 10;
+  }
+
+  .modal-dropdown {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: clamp(5rem, 80%, 12rem);
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: #00000080;
+    z-index: 9;
+    cursor: auto;
+  }
+}

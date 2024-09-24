@@ -58,6 +58,9 @@ const AddBlockSiteDialog = () => {
           <div className="flex gap-x-2">
             {state.shouldSchedule && (
               <>
+                <p>
+                  This time interval will be when the website is not blocked.
+                </p>
                 <div className="flex gap-x-1 flex-1">
                   <label htmlFor="startTime" className="text-muted-foreground">
                     Start Time
@@ -103,6 +106,14 @@ const AddBlockSiteDialog = () => {
           toaster.danger("Please enter a valid URL");
           return;
         }
+
+        if (state.shouldSchedule) {
+          if (state.startTime > state.endTime) {
+            toaster.danger("Start time must be before end time");
+            return;
+          }
+        }
+
         try {
           await addBlockSite(
             url,

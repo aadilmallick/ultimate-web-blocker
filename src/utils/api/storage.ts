@@ -41,6 +41,7 @@
 export abstract class ChromeStorage<
   T extends Record<string, any> = Record<string, any>
 > {
+  abstract areaName: chrome.storage.AreaName;
   constructor(
     protected storage:
       | chrome.storage.SyncStorageArea
@@ -62,16 +63,18 @@ export abstract class ChromeStorage<
   }
 
   async getAll() {
-    const data = await this.storage.get(await this.getKeys());
+    const data = await this.storage.get(this.getKeys());
     return data as T;
   }
 
-  async getKeys() {
-    if (!this.defaultData) {
-      const data = await this.storage.get(null);
-      return Object.keys(data) as (keyof T)[];
-    }
+  getKeys() {
+    if (!this.defaultData) return [];
     return Object.keys(this.defaultData) as (keyof T)[];
+  }
+
+  async getAllKeys() {
+    const data = await this.storage.get(null);
+    return Object.keys(data);
   }
 
   async set<K extends keyof T>(key: K, value: T[K]) {
@@ -112,18 +115,38 @@ export abstract class ChromeStorage<
   }
 
   onChanged(
-    callback: (
-      changes: { [key: string]: chrome.storage.StorageChange },
-      namespace: "sync" | "local" | "managed" | "session"
-    ) => void
+    callback: (change: chrome.storage.StorageChange, key: keyof T) => void
   ) {
-    chrome.storage.onChanged.addListener(callback);
+    type StorageCallback = (
+      changes: {
+        [key: string]: chrome.storage.StorageChange;
+      },
+      areaName: chrome.storage.AreaName
+    ) => void;
+    const handler: StorageCallback = async (changes, namespace) => {
+      let keys = this.getKeys();
+      if (keys.length === 0) {
+        keys = await this.getAllKeys();
+      }
+      if (namespace === this.areaName) {
+        for (const key in changes) {
+          if (keys.includes(key)) {
+            const change = changes[key];
+            callback(change, key as keyof T);
+          }
+        }
+      }
+    };
+    chrome.storage.onChanged.addListener(handler);
+
+    return handler;
   }
 }
 
 export class SyncStorage<
   T extends Record<string, any> = Record<string, any>
 > extends ChromeStorage<T> {
+  override areaName = "sync" as chrome.storage.AreaName;
   constructor(defaultData?: T) {
     super(chrome.storage.sync, defaultData);
   }
@@ -132,6 +155,8 @@ export class SyncStorage<
 export class LocalStorage<
   T extends Record<string, any> = Record<string, any>
 > extends ChromeStorage<T> {
+  override areaName = "local" as chrome.storage.AreaName;
+
   constructor(defaultData?: T) {
     super(chrome.storage.local, defaultData);
   }

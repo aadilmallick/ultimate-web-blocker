@@ -11,7 +11,7 @@ export const focusModeChannel = new MessagesOneWay<{
 export function pingContentScript(
   tabId: number,
   maxRetries = 10,
-  interval = 500
+  interval = 1000
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     let attempts = 0;

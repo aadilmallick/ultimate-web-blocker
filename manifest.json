@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Ultimate Web Blocker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "action": {
     "default_popup": "index.html",
     "default_title": "See block groups",
@@ -18,7 +18,7 @@
     "48": "public/icon.png",
     "128": "public/icon.png"
   },
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "contextMenus"],
   "options_page": "src/options/options.html",
   "background": {
     "service_worker": "src/background/background.ts",

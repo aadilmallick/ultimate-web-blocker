@@ -13,6 +13,9 @@ import {
   pingContentScript,
   pingContentScriptWithCb,
 } from "./controllers/messageController";
+import { ContextMenuHandler } from "./controllers/contextMenuController";
+import Tabs, { TabAPI, TabModel } from "app/utils/api/tabs";
+import { BlockScheduler, isValidUrl } from "./controllers/backgroundController";
 
 Runtime.onInstall({
   // runs first time you download the extension
@@ -27,24 +30,43 @@ Runtime.onInstall({
     console.log("Extension loaded");
     await blocksSitesStorage.setup();
     await focusModeStorage.setup();
-    console.log(await blocksSitesStorage.getAll());
-    console.log(await focusModeStorage.getAll());
+
+    const blocklist = await blocksSitesStorage.getAll();
+    blocklist.blockSites.forEach((site) => {
+      if (site.schedule) {
+        console.log(site.schedule);
+        console.log("start time", site.schedule.startTime);
+        console.log("end time", site.schedule.endTime);
+        console.log(
+          DateModel.convertTimeToDate(site.schedule.startTime).toTimeString()
+        );
+        console.log(
+          DateModel.convertTimeToDate(site.schedule.endTime).toTimeString()
+        );
+      }
+    });
+    ContextMenuHandler.createAddUrlMenuFocus();
   },
 });
 
-function isValidUrl(url: string) {
-  const manifest = chrome.runtime.getManifest();
-  if (!manifest.content_scripts) throw new Error("No content scripts found");
-  const matches = manifest.content_scripts[0].matches;
-  if (!matches) throw new Error("No matches found in manifest");
-  let isValid = true;
-  matches.forEach((match) => {
-    if (!url.match(match)) {
-      isValid = false;
+ContextMenuHandler.listenForAddUrlMenuFocusClick();
+
+// when user navigates to a different tab
+chrome.tabs.onHighlighted.addListener(({ tabIds, windowId }) => {
+  const currentTabId = tabIds[0];
+  async function doStuff() {
+    const tab = await Tabs.getTabById(currentTabId);
+    if (!tab.url) return;
+    if (!isValidUrl(tab.url)) {
+      console.log("invalid tab", tab.url);
+      return;
     }
-  });
-  return isValid;
-}
+    handleFocusMode(currentTabId, tab.url);
+    onUpdated(currentTabId, tab.url!);
+  }
+
+  doStuff();
+});
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
@@ -54,18 +76,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 
     handleFocusMode(tabId, tab.url!);
-  }
-});
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete") {
-    if (!isValidUrl(tab.url!)) {
-      console.log("invalid tab", tab.url);
-      return;
-    }
     onUpdated(tabId, tab.url!);
   }
 });
+
+// chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+//   if (changeInfo.status === "complete") {
+//     if (!isValidUrl(tab.url!)) {
+//       console.log("invalid tab", tab.url);
+//       return;
+//     }
+//     onUpdated(tabId, tab.url!);
+//   }
+// });
 
 async function handleFocusMode(tabId: number, url: string) {
   const focusGroup = await focusModeStorage.get("focusGroup");
@@ -73,8 +96,6 @@ async function handleFocusMode(tabId: number, url: string) {
     url,
     focusGroup.links.map((link) => link.url)
   );
-  console.log(focusGroup);
-  console.log(`not in focus group ${new URL(url).hostname}`, notInFocusGroup);
   if (focusGroup.isFocusing && notInFocusGroup) {
     await pingContentScriptWithCb(tabId, {
       successCb: (message) => {
@@ -92,6 +113,11 @@ async function onUpdated(tabId: number, url: string) {
   const scheduledSites = await StorageHandler.getScheduledBlockSites();
   const permanetlyBlockedUrls = permanentlyBlockedSites.map((site) => site.url);
   const scheduledUrls = scheduledSites.map((site) => site.url);
+  console.log(
+    "should block",
+    URLHandler.containsURL(url!, permanetlyBlockedUrls) ||
+      URLHandler.containsURL(url!, scheduledUrls)
+  );
   if (URLHandler.containsURL(url!, permanetlyBlockedUrls)) {
     // block site
     await pingContentScriptWithCb(tabId, {
@@ -103,18 +129,22 @@ async function onUpdated(tabId: number, url: string) {
     });
   }
   if (URLHandler.containsURL(url!, scheduledUrls)) {
-    const currentTime = Date.now();
-    const site = scheduledSites.find((site) => site.url === url);
+    const site = scheduledSites.find((site) =>
+      new URL(url!).hostname.includes(site.url)
+    );
     if (!site) {
       console.error("Site not found in scheduled sites");
-      console.log(site, scheduledSites);
+      console.log(site, scheduledSites, url);
       return;
     }
     const { startTime, endTime } = site.schedule!;
-    if (
-      currentTime >= DateModel.convertTimeToDate(startTime).getTime() &&
-      currentTime <= DateModel.convertTimeToDate(endTime).getTime()
-    ) {
+    const blockScheduler = new BlockScheduler(
+      DateModel.convertTimeToDate(startTime),
+      DateModel.convertTimeToDate(endTime)
+    );
+    console.log("should block", blockScheduler.shouldBlock(new Date()));
+    if (blockScheduler.shouldBlock(new Date())) {
+      console.log("should block schedule");
       await pingContentScriptWithCb(tabId, {
         successCb: (message) => {
           console.log(message);

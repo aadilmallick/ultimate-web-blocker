@@ -1,6 +1,12 @@
 // requires the contextMenus API permission
 
 export default class ContextMenu {
+  static {
+    if (!chrome.contextMenus) {
+      throw new Error("chrome.contextMenus is not available");
+    }
+  }
+
   static LIMIT = chrome.contextMenus.ACTION_MENU_TOP_LEVEL_LIMIT;
   static menuCount = 0;
   private cb?: (info: chrome.contextMenus.OnClickData) => void;

@@ -1,3 +1,5 @@
-# Changes
+# Todos
 
-- Modify custom hooks. Added storage listener for realtime updates
+- [ ] Fix scheduled blocking
+- [ ] Add ability to add current site to focus list
+- [ ] Add validation

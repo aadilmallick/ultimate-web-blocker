@@ -29,12 +29,14 @@ const SetFocusingSwitch = () => {
 
   return (
     <div className="absolute top-1 right-1 flex items-center gap-x-2">
-      <Switch
-        checked={focusGroup.isFocusing}
-        onCheckedChange={(checked) => {
-          setFocusing(checked);
-        }}
-      />
+      {focusGroup.links.length > 0 && (
+        <Switch
+          checked={focusGroup.isFocusing}
+          onCheckedChange={(checked) => {
+            setFocusing(checked);
+          }}
+        />
+      )}
       <IconButton
         className="text-gray-400 transition-colors hover:text-gray-600"
         title="Open new window"

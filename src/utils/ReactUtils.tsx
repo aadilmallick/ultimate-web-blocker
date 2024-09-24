@@ -102,22 +102,13 @@ export function useChromeStorage<
   }, []);
 
   React.useEffect(() => {
-    const handleChange = async (changes: {
-      [key: string]: chrome.storage.StorageChange;
-    }) => {
-      const keys = await storage.getKeys();
-      if (keys.includes(key)) {
-        const thing = changes[key as string];
-        if (!thing) return;
-        setValue(thing.newValue);
-      }
-    };
-    // Set up listener for changes
-    chrome.storage.onChanged.addListener(handleChange);
+    const listener = storage.onChanged((change, key) => {
+      console.log(change, key);
+      setValue(change.newValue);
+    });
 
-    // Clean up listener on unmount
     return () => {
-      chrome.storage.onChanged.removeListener(handleChange);
+      chrome.storage.onChanged.removeListener(listener);
     };
   }, []);
 

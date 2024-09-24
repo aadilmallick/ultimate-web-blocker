@@ -42,6 +42,17 @@ export class StorageHandler {
       (site) => !site.schedule
     );
   }
+
+  static async addFocusLink(url: string) {
+    const focusGroup = await focusModeStorage.get("focusGroup");
+    const newLink = { url, id: crypto.randomUUID() };
+    const newLinks = focusGroup ? [...focusGroup.links, newLink] : [newLink];
+    const newFocusGroup: FocusGroup = {
+      ...focusGroup,
+      links: newLinks,
+    };
+    await focusModeStorage.set("focusGroup", newFocusGroup);
+  }
 }
 
 export class URLHandler {
@@ -50,6 +61,9 @@ export class URLHandler {
   }
 
   static containsURLIDK(url: string, urls: string[]) {
+    if (urls.length === 0) {
+      return true;
+    }
     return urls.some((u) =>
       new URL(url).hostname.includes(new URL(u).hostname)
     );

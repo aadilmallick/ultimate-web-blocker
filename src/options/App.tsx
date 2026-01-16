@@ -14,8 +14,13 @@ export const App = () => {
   useEffect(() => {
     // Load the custom message when component mounts
     const loadMessage = async () => {
-      const message = await appSettingsStorage.get("customBlockMessage");
-      setCustomMessage(message || "Think about your dreams.");
+      try {
+        const message = await appSettingsStorage.get("customBlockMessage");
+        setCustomMessage(message || "Think about your dreams.");
+      } catch (error) {
+        console.error("Failed to load custom message:", error);
+        setCustomMessage("Think about your dreams.");
+      }
     };
     loadMessage();
   }, []);
@@ -28,6 +33,7 @@ export const App = () => {
       setSavedStatus("Saved successfully!");
       setTimeout(() => setSavedStatus(""), 3000);
     } catch (error) {
+      console.error("Failed to save custom message:", error);
       setSavedStatus("Failed to save. Please try again.");
     } finally {
       setIsSaving(false);

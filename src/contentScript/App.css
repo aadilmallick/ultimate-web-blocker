@@ -7,16 +7,84 @@
 body {
   position: relative;
   min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
 }
 
 .contentscript-container {
-  background: black;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: fixed;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
   .content-container {
     color: white;
+    text-align: center;
+    max-width: 600px;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    animation: fadeIn 0.5s ease-in;
+    
+    .block-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
     h1 {
       font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
     }
+    
+    .custom-message {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      border-left: 4px solid rgba(255, 255, 255, 0.5);
+      
+      p {
+        font-size: 1.25rem;
+        line-height: 1.6;
+        font-weight: 400;
+        margin: 0;
+      }
+    }
+    
+    .motivational-text {
+      font-size: 1rem;
+      opacity: 0.9;
+      font-style: italic;
+      margin-top: 1rem;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
 }

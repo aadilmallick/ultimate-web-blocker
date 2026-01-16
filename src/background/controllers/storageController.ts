@@ -27,7 +27,9 @@ export const focusModeStorage = new LocalStorage({
     isFocusing: false,
   } as FocusGroup,
 });
-export const appSettingsStorage = new SyncStorage({});
+export const appSettingsStorage = new LocalStorage({
+  customBlockMessage: "Think about your dreams.",
+});
 
 // define static methods here
 export class StorageHandler {

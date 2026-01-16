@@ -2,6 +2,7 @@ import { Runtime } from "app/utils/api/runtime";
 import {
   blocksSitesStorage,
   focusModeStorage,
+  appSettingsStorage,
   StorageHandler,
   URLHandler,
 } from "./controllers/storageController";
@@ -30,6 +31,7 @@ Runtime.onInstall({
     console.log("Extension loaded");
     await blocksSitesStorage.setup();
     await focusModeStorage.setup();
+    await appSettingsStorage.setup();
 
     const blocklist = await blocksSitesStorage.getAll();
     blocklist.blockSites.forEach((site) => {
